@@ -33,6 +33,7 @@ var jwtTestData = []struct {
 	claims      jwt.Claims
 	valid       bool
 	errors      uint32
+	expectedErrors []error
 	parser      *jwt.Parser
 }{
 	{
@@ -43,6 +44,7 @@ var jwtTestData = []struct {
 		true,
 		0,
 		nil,
+		nil,
 	},
 	{
 		"basic expired",
@@ -51,6 +53,7 @@ var jwtTestData = []struct {
 		jwt.MapClaims{"foo": "bar", "exp": float64(time.Now().Unix() - 100)},
 		false,
 		jwt.ValidationErrorExpired,
+		nil,
 		nil,
 	},
 	{
@@ -61,6 +64,7 @@ var jwtTestData = []struct {
 		false,
 		jwt.ValidationErrorNotValidYet,
 		nil,
+		nil,
 	},
 	{
 		"expired and nbf",
@@ -69,6 +73,7 @@ var jwtTestData = []struct {
 		jwt.MapClaims{"foo": "bar", "nbf": float64(time.Now().Unix() + 100), "exp": float64(time.Now().Unix() - 100)},
 		false,
 		jwt.ValidationErrorNotValidYet | jwt.ValidationErrorExpired,
+		nil,
 		nil,
 	},
 	{
@@ -79,6 +84,17 @@ var jwtTestData = []struct {
 		false,
 		jwt.ValidationErrorSignatureInvalid,
 		nil,
+		nil,
+	},
+	{
+		"basic invalid and expired",
+		"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJmb28iOiJiYXIiLCJleHAiOjEyMzR9.IbFvatLIJ2Z7B_MAaeIaRZsRSQF1CDzmAE0osHII3WfRTbPavonrDXz-p2Ap_oh9LT2lyohL_jCLoVcpTyu7K3Rt-hdgxZ1_r1StwM1we0SqW2BFFeXCzyS9SLf2YTaVR35lVvfwwlCpPBgOw1SBbczm9m6yPgA9Afsvw_lG_GU2civvG0UzHXxbzWWvJoflGokJDuoHQiku2bfxReyNsoUGcLjx5tfkY7cPihM3CffPpRFYCVjv_abHYelZWpVjdGULQyJDInGYqO8oANqNTtjui7aqxBpcFCUBwVVgktM4Q6Dvj-o5LrdPyJSEl0b_R2JstFE5CbEZGN5anN1yHa",
+		defaultKeyFunc,
+		jwt.MapClaims{"foo": "bar", "exp": 1234.0},
+		false,
+		jwt.ValidationErrorSignatureInvalid,
+		[]error{jwt.ErrTokenSignatureInvalid, rsa.ErrVerification},
+		nil,
 	},
 	{
 		"basic nokeyfunc",
@@ -87,6 +103,7 @@ var jwtTestData = []struct {
 		jwt.MapClaims{"foo": "bar"},
 		false,
 		jwt.ValidationErrorUnverifiable,
+		nil,
 		nil,
 	},
 	{
@@ -97,6 +114,7 @@ var jwtTestData = []struct {
 		false,
 		jwt.ValidationErrorSignatureInvalid,
 		nil,
+		nil,
 	},
 	{
 		"basic errorkey",
@@ -106,6 +124,7 @@ var jwtTestData = []struct {
 		false,
 		jwt.ValidationErrorUnverifiable,
 		nil,
+		nil,
 	},
 	{
 		"invalid signing method",
@@ -114,6 +133,7 @@ var jwtTestData = []struct {
 		jwt.MapClaims{"foo": "bar"},
 		false,
 		jwt.ValidationErrorSignatureInvalid,
+		nil,
 		&jwt.Parser{ValidMethods: []string{"HS256"}},
 	},
 	{
@@ -123,6 +143,7 @@ var jwtTestData = []struct {
 		jwt.MapClaims{"foo": "bar"},
 		true,
 		0,
+		nil,
 		&jwt.Parser{ValidMethods: []string{"RS256", "HS256"}},
 	},
 	{
@@ -132,6 +153,7 @@ var jwtTestData = []struct {
 		jwt.MapClaims{"foo": json.Number("123.4")},
 		true,
 		0,
+		nil,
 		&jwt.Parser{UseJSONNumber: true},
 	},
 	{
@@ -143,6 +165,7 @@ var jwtTestData = []struct {
 		},
 		true,
 		0,
+		nil,
 		&jwt.Parser{UseJSONNumber: true},
 	},
 	{
@@ -152,6 +175,7 @@ var jwtTestData = []struct {
 		jwt.MapClaims{"foo": "bar", "exp": json.Number(fmt.Sprintf("%v", time.Now().Unix()-100))},
 		false,
 		jwt.ValidationErrorExpired,
+		nil,
 		&jwt.Parser{UseJSONNumber: true},
 	},
 	{
@@ -161,6 +185,7 @@ var jwtTestData = []struct {
 		jwt.MapClaims{"foo": "bar", "nbf": json.Number(fmt.Sprintf("%v", time.Now().Unix()+100))},
 		false,
 		jwt.ValidationErrorNotValidYet,
+		nil,
 		&jwt.Parser{UseJSONNumber: true},
 	},
 	{
@@ -170,6 +195,7 @@ var jwtTestData = []struct {
 		jwt.MapClaims{"foo": "bar", "nbf": json.Number(fmt.Sprintf("%v", time.Now().Unix()+100)), "exp": json.Number(fmt.Sprintf("%v", time.Now().Unix()-100))},
 		false,
 		jwt.ValidationErrorNotValidYet | jwt.ValidationErrorExpired,
+		nil,
 		&jwt.Parser{UseJSONNumber: true},
 	},
 	{
@@ -179,6 +205,7 @@ var jwtTestData = []struct {
 		jwt.MapClaims{"foo": "bar", "nbf": json.Number(fmt.Sprintf("%v", time.Now().Unix()+100))},
 		true,
 		0,
+		nil,
 		&jwt.Parser{UseJSONNumber: true, SkipClaimsValidation: true},
 	},
 }
